@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = process.env.PORT_ONE || 4001;
 const mongoose = require("mongoose");
+const isAuthenticated = require("./isAuthenticated");
 const Commande = require("./Commande");
 const axios = require('axios');
 app.use(express.json());
@@ -31,23 +32,19 @@ async function httpRequest(ids) {
                 'Content-Type': 'application/json'
             }
         });
-        //appel de la fonction prixTotal pour calculer le prix
-        // total de la commande en se basant sur le résultat de la requête
-        // http
-        console.log(response.data);
+        //appel de la fonction prixTotal pour calculer le prix total de la commande en se basant sur le résultat de la requête http
         return prixTotal(response.data);
     } catch (error) {
         console.error(error);
     }
 }
-app.post("/commande/ajouter", async (req, res, next) => {
-    // Création d'une nouvelle commande dans la collection
-    // commande
-    const { ids, email_utilisateur } = req.body;
+app.post("/commande/ajouter",isAuthenticated, async (req, res, next) => {
+    // Création d'une nouvelle commande dans la collection commande
+    const {ids} = req.body;
     httpRequest(ids).then(total => {
         const newCommande = new Commande({
             produits:ids,
-            email_utilisateur: email_utilisateur,
+            email_utilisateur: req.user.email,
             prix_total: total,
         });
         newCommande.save()
